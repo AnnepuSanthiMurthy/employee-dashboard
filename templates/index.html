@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Employee NBA - Attendance Dashboard</title>
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Plotly.js for advanced graphs -->
+  <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f7f8fb;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#0ea5a4;
+      --success:#16a34a;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --radius:10px;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{background:var(--bg); margin:0; padding:32px;}
+    .container{max-width:1100px; margin:0 auto;}
+    .search {display:flex; gap:12px; margin-bottom:22px;}
+    .search input{flex:1; padding:14px 18px; border-radius:12px; border:1px solid #d1d5db; font-size:16px;}
+    .search button{padding:12px 18px; background:var(--accent); color:white; border-radius:10px; border:none; cursor:pointer; font-weight:600;}
+
+    .card{background:var(--card); border-radius:var(--radius); padding:18px; box-shadow: 0 6px 18px rgba(15,23,42,0.06); margin-bottom:18px;}
+    .top-row{display:flex; justify-content:space-between; align-items:center; gap:16px;}
+    .profile-left{flex:1;}
+    .profile-right{flex:1; text-align:right; color:var(--muted); font-size:15px;}
+
+    .big-id{font-size:40px; font-weight:700; margin:0;}
+    .muted{color:var(--muted); font-weight:500;}
+    .grid-4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+    .metric{background:var(--card); padding:14px; border-radius:10px; text-align:center;}
+    .metric .label{font-size:13px; color:var(--muted);}
+    .metric .value{font-size:18px; font-weight:700; margin-top:6px;}
+
+    .charts{display:flex; gap:18px;}
+    .charts .chart-card{flex:1;}
+    canvas{max-width:100%;}
+
+    .graphs-container{display:flex; gap:18px; margin-top:18px;}
+    .graphs-container > div{flex:1; min-height:350px;}
+
+    .risk-list{display:flex; flex-direction:column; gap:8px;}
+    .badge{display:inline-block; padding:6px 12px; border-radius:999px; color:white; font-weight:600; font-size:13px;}
+    .badge.low{background:var(--success);}
+    .badge.medium{background:var(--warning);}
+    .badge.high{background:var(--danger);}
+    .actions ul{padding-left:18px; margin:0;}
+    .actions li{margin:8px 0; font-weight:600;}
+    .row{display:flex; justify-content:space-between; align-items:center;}
+    hr.sep{border:0; border-top:1px solid #eef2f6; margin:14px 0;}
+    .muted-small{color:var(--muted); font-size:13px;}
+    @media (max-width:900px){
+      .charts{flex-direction:column;}
+      .graphs-container{flex-direction:column;}
+      .profile-right{display:none;}
+      .grid-4{grid-template-columns:repeat(2,1fr);}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card search">
+      <input id="searchInput" placeholder="Search employee by ID or name (e.g. AL)" />
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div class="card top-row" id="profileCard">
+      <div class="profile-left">
+        <div class="big-id" id="empId">—</div>
+        <div class="muted" id="designation">Designation —</div>
+      </div>
+     <div class="profile-right">
+    <div><strong>Account:</strong> <span id="account">—</span></div>
+    <div style="margin-top:8px;"><strong>Billed:</strong> <span id="billed">—</span></div>
+</div>
+
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:12px;">Working Hours</div>
+      <div class="grid-4">
+        <div class="metric"><div class="label">Avg. In Time</div><div class="value" id="avgIn">—</div></div>
+        <div class="metric"><div class="label">Avg. Out Time</div><div class="value" id="avgOut">—</div></div>
+        <div class="metric"><div class="label">Avg. Bay Hours</div><div class="value" id="avgBay">—</div></div>
+        <div class="metric"><div class="label">Avg. Break Hours</div><div class="value" id="avgBreak">—</div></div>
+      </div>
+    </div>
+
+  <div id="graphs-container" style="margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
+  
+  <div style="flex: 1; min-width: 400px;">
+    <h3>Compliance Quadrant (Benchmark Comparison)</h3>
+    <div id="compliance-quadrant" style="height:400px; margin-top: 40px;"></div>
+  </div>
+
+ <div style="flex: 1; min-width: 400px;">
+  <h3>Leave Analysis (Half-Day vs Full-Day)</h3>
+  <div id="leave-analysis" style="margin-top: 40px; height:400px;"></div>
+</div>
+
+
+</div>
+
+
+  <!-- Load Plotly instead of Chart.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:12px;">Risk Analysis</div>
+      <div class="row">
+        <div class="risk-list" id="riskList"></div>
+        <div style="width:45%; text-align:right;">
+          <div style="font-weight:700; font-size:18px;" id="riskScore">—</div>
+          <div class="muted-small">Composite risk score</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card actions">
+      <div style="font-weight:700; margin-bottom:12px;">Recommended Action</div>
+      <div id="recommendationSection">
+        <div class="muted-small">Search an employee ID and press Search to view recommendations.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
