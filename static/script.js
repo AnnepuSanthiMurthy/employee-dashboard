@@ -142,6 +142,30 @@ function renderGraphs(graphData, selectedEmployeeId) {
             "Full-Day": Math.round(graphData.reduce((sum, d) => sum + (d["Full-Day leave"] || 0), 0) / graphData.length)
         };
 
+
+const selectedAccount = (selectedEmp["Account code"] || "").trim().toLowerCase();
+
+const accountEmployees = graphData.filter(d => {
+    const code = (d["Account code"] || "").trim().toLowerCase();
+    return code === selectedAccount;
+});
+
+console.log("Account Employees:", accountEmployees.map(e => e["Employee ID"]));
+
+const accountAvg = accountEmployees.length > 0 ? {
+    "Half-Day": Math.round(
+        accountEmployees.reduce((sum, d) => sum + (d["Half-Day leave"] || 0), 0) / accountEmployees.length
+    ),
+    "Full-Day": Math.round(
+        accountEmployees.reduce((sum, d) => sum + (d["Full-Day leave"] || 0), 0) / accountEmployees.length
+    )
+} : {
+    "Half-Day": 0,
+    "Full-Day": 0
+};
+
+
+
         const traceEmp = {
             x: Object.keys(empLeaves),
             y: Object.values(empLeaves),
@@ -150,14 +174,22 @@ function renderGraphs(graphData, selectedEmployeeId) {
             marker: { color: "red" } // 🔴 Highlight employee
         };
 
-        const traceOrg = {
-            x: Object.keys(orgAvg),
-            y: Object.values(orgAvg),
-            name: "organization Avg",
-            type: "bar",
-            marker: { color: "orange" }
-        };
+const traceAccount = {
+    x: Object.keys(accountAvg),
+    y: Object.values(accountAvg),
+    name: `Account : ${selectedEmp["Account code"]}`,
+    type: "bar",
+    marker: { color: "steelblue" }
+};
 
+const orgAvgLabel = `Organization Avg : ${orgAvg["Half-Day"]} HD / ${orgAvg["Full-Day"]} FD`;
+const traceOrg = {
+    x: Object.keys(orgAvg),
+    y: Object.values(orgAvg),
+    name: orgAvgLabel, // ✅ Updated label
+    type: "bar",
+    marker: { color: "orange" }
+};
         const layoutLeave = {
             
             barmode: "group",
@@ -173,7 +205,7 @@ function renderGraphs(graphData, selectedEmployeeId) {
             margin: { t: 50, l: 50, r: 50, b: 50 }
         };
 
-        Plotly.newPlot("leave-analysis", [traceEmp, traceOrg], layoutLeave);
+    Plotly.newPlot("leave-analysis", [traceEmp, traceAccount, traceOrg], layoutLeave);
     }
 }
 
