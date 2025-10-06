@@ -159,6 +159,7 @@ def get_employee(emp_id):
         over_break_ratio = (break_h / office_total * 100) if office_total > 0 else 0
         graph_data.append({
             "Employee ID": str(r['Employee ID']),
+            "Account code": str(r.get("Account code", "")).strip().lower(),
             "Avg. Office hrs": round(office_h, 2),
             "Avg. Bay hrs": round(bay_h, 2),
             "Avg. Break hrs": round(break_h, 2),
